@@ -176,7 +176,7 @@ if [ "$PRODUCTION" = true ]; then
   
   # Get real certificates from Let's Encrypt
   echo -e "${GREEN}Obtaining Let's Encrypt certificates for ${DOMAIN}, www.${DOMAIN}, api.${DOMAIN} and ${API_DOMAIN}...${NC}"
-  sudo certbot certonly --standalone --agree-tos --non-interactive -d ${DOMAIN} -d www.${DOMAIN} -d api.${DOMAIN} -d ${API_DOMAIN} --email admin@${DOMAIN}
+  sudo certbot certonly --standalone --agree-tos --non-interactive --expand -d ${DOMAIN} -d www.${DOMAIN} -d api.${DOMAIN} -d ${API_DOMAIN} --email admin@${DOMAIN}
   
   # Copy certificates
   sudo cp /etc/letsencrypt/live/${DOMAIN}/fullchain.pem nginx/ssl/skillgrid.crt
