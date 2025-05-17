@@ -72,11 +72,12 @@ For proper CORS configuration:
 
 ### Local Development
 
-```
-# Build Docker image
-docker build -t skillgrid-frontend .
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
 
-# Run Docker container with Ory configuration
+# Or using Docker directly
+docker build -t skillgrid-frontend .
 docker run -d -p 80:80 \
   -e REACT_APP_ORY_URL=https://infallible-shaw-gpsjwuc0lg.projects.oryapis.com \
   skillgrid-frontend
@@ -92,54 +93,37 @@ To deploy to skillgrid.tech:
    cd skillgrid_hse/frontend
    ```
 
-2. Start with a basic HTTP deployment first:
+2. Set up SSL certificate:
    ```bash
-   # Make the scripts executable
-   chmod +x check-connection.sh setup-ssl.sh
-
-   # Deploy the HTTP version first
-   docker-compose -f docker-compose.prod.yml up -d
-   ```
-
-3. Check connectivity to ensure your domain is accessible:
-   ```bash
-   ./check-connection.sh
-   ```
-
-4. Once you've confirmed the site is accessible via HTTP, you can set up SSL:
-   ```bash
-   # Make sure port 80 is open for Let's Encrypt verification
-   # If you're using a firewall, run: ufw allow 80/tcp
-
-   # Stop any running web server on port 80
-   docker-compose -f docker-compose.prod.yml down
-
-   # Get SSL certificate
-   ./setup-ssl.sh
+   # Install certbot if not installed
+   sudo apt-get update
+   sudo apt-get install -y certbot
    
-   # After getting the certificate, you can deploy with SSL
-   # Edit docker-compose.prod.yml to use nginx.prod.conf
-   # Then run:
-   docker-compose -f docker-compose.prod.yml up -d
+   # Obtain SSL certificate 
+   sudo certbot certonly --standalone -d skillgrid.tech -d www.skillgrid.tech
    ```
 
-The application will be available at https://skillgrid.tech after SSL is set up.
+3. Deploy with SSL:
+   ```bash
+   # Make the deployment script executable
+   chmod +x deploy-ssl.sh
+   
+   # Run the deployment script
+   sudo ./deploy-ssl.sh
+   ```
 
-### Troubleshooting SSL
+The application will be available at https://skillgrid.tech after deployment.
 
-If you encounter SSL setup issues:
+### SSL Certificate Renewal
 
-1. **Check DNS Configuration**: Make sure your domain's DNS A record points to your server's IP address
-2. **Check Firewall Settings**: Ensure port 80 is open for Let's Encrypt verification
-3. **Check Server Connectivity**: Use `./check-connection.sh` to verify your domain is accessible
-
-### SSL Renewal
-
-SSL certificates are automatically renewed by the certbot container. However, if you need to renew them manually:
+SSL certificates from Let's Encrypt expire after 90 days. Set up automatic renewal with a cron job:
 
 ```bash
-docker-compose -f docker-compose.prod.yml run --rm certbot renew
+# Add to crontab
+echo "0 0,12 * * * root certbot renew --quiet && cd /home/skillgrid_hse/frontend && ./deploy-ssl.sh" | sudo tee -a /etc/crontab
 ```
+
+This will check twice daily if the certificate needs renewal and redeploy the application if it does.
 
 ## Tech Stack
 

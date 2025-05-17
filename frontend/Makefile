@@ -1,10 +1,10 @@
-.PHONY: dev prod build clean ssl restart logs
+.PHONY: dev prod build clean ssl restart logs deploy
 
 # Development environment
 dev:
 	docker-compose up --build
 
-# Production environment
+# Production environment without SSL
 prod:
 	docker-compose -f docker-compose.prod.yml up -d --build
 
@@ -16,10 +16,10 @@ build:
 clean:
 	docker-compose -f docker-compose.prod.yml down -v
 
-# Initialize SSL
+# Deploy with SSL (make sure to run certbot first)
 ssl:
-	chmod +x init-letsencrypt.sh
-	./init-letsencrypt.sh
+	chmod +x deploy-ssl.sh
+	sudo ./deploy-ssl.sh
 
 # Restart containers
 restart:
@@ -29,7 +29,7 @@ restart:
 logs:
 	docker-compose -f docker-compose.prod.yml logs -f
 
-# Pull latest changes and redeploy
+# Pull latest changes and redeploy with SSL
 deploy:
 	git pull
-	docker-compose -f docker-compose.prod.yml up -d --build 
+	make ssl 
