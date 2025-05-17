@@ -68,6 +68,15 @@ For proper CORS configuration:
      - http://localhost:8080  # For Docker development
    ```
 
+> **IMPORTANT**: If you deploy to a new domain or see CORS errors like 
+> `Failed to load resource: Origin is not allowed by Access-Control-Allow-Origin`, 
+> you must update your Ory CORS settings to include your domain.
+>
+> You can use the helper script for guidance:
+> ```bash
+> ./update-ory-cors.sh
+> ```
+
 ## Deployment
 
 ### Local Development
