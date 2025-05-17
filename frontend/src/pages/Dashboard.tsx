@@ -43,8 +43,9 @@ const Dashboard: React.FC = () => {
     return null; // Will redirect via the useEffect
   }
 
-  // Extract user email
+  // Extract user information
   const userEmail = userInfo?.traits?.email || 'No email found';
+  const personType = userInfo?.traits?.person_type || 'Not specified';
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] bg-gradient-to-b from-gray-50 to-gray-100 px-4">
@@ -53,8 +54,14 @@ const Dashboard: React.FC = () => {
         <p className="text-lg text-gray-700 mb-6 text-center">
           You are authenticated as:
         </p>
-        <div className="bg-gray-100 p-4 rounded-md text-center font-mono break-all">
-          {userEmail}
+        <div className="bg-gray-100 p-4 rounded-md mb-4">
+          <p className="font-mono break-all">{userEmail}</p>
+        </div>
+        <div className="mt-4">
+          <p className="text-gray-700 mb-2">Account Type:</p>
+          <div className="bg-gray-100 p-4 rounded-md">
+            <p className="capitalize">{personType}</p>
+          </div>
         </div>
       </div>
     </div>

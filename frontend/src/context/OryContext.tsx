@@ -6,8 +6,7 @@ interface UserInfo {
   id: string;
   traits?: {
     email?: string;
-    name?: string;
-    username?: string;
+    person_type?: 'candidate' | 'recruiter';
     [key: string]: any;
   };
 }
