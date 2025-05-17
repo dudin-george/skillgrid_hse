@@ -92,27 +92,46 @@ To deploy to skillgrid.tech:
    cd skillgrid_hse/frontend
    ```
 
-2. Prepare directories for SSL certificates:
+2. Start with a basic HTTP deployment first:
    ```bash
-   mkdir -p certbot/conf certbot/www
-   ```
+   # Make the scripts executable
+   chmod +x check-connection.sh setup-ssl.sh
 
-3. Make the initialization script executable:
-   ```bash
-   chmod +x init-letsencrypt.sh
-   ```
-
-4. Initialize SSL certificates:
-   ```bash
-   ./init-letsencrypt.sh
-   ```
-
-5. Start the production services:
-   ```bash
+   # Deploy the HTTP version first
    docker-compose -f docker-compose.prod.yml up -d
    ```
 
-The application will be available at https://skillgrid.tech
+3. Check connectivity to ensure your domain is accessible:
+   ```bash
+   ./check-connection.sh
+   ```
+
+4. Once you've confirmed the site is accessible via HTTP, you can set up SSL:
+   ```bash
+   # Make sure port 80 is open for Let's Encrypt verification
+   # If you're using a firewall, run: ufw allow 80/tcp
+
+   # Stop any running web server on port 80
+   docker-compose -f docker-compose.prod.yml down
+
+   # Get SSL certificate
+   ./setup-ssl.sh
+   
+   # After getting the certificate, you can deploy with SSL
+   # Edit docker-compose.prod.yml to use nginx.prod.conf
+   # Then run:
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
+
+The application will be available at https://skillgrid.tech after SSL is set up.
+
+### Troubleshooting SSL
+
+If you encounter SSL setup issues:
+
+1. **Check DNS Configuration**: Make sure your domain's DNS A record points to your server's IP address
+2. **Check Firewall Settings**: Ensure port 80 is open for Let's Encrypt verification
+3. **Check Server Connectivity**: Use `./check-connection.sh` to verify your domain is accessible
 
 ### SSL Renewal
 
