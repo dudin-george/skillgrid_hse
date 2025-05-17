@@ -25,31 +25,22 @@ Create a `.env.local` file with the following variables:
 
 ```
 REACT_APP_API_URL=https://api.skillgrid.tech
-REACT_APP_ORY_URL=https://infallible-shaw-gpsjwuc0lg.projects.oryapis.com
+REACT_APP_ORY_URL=https://auth.skillgrid.tech
 ```
 
 ## Ory Integration
 
 This project uses Ory for authentication. The Ory configuration is:
 
-- Ory SDK URL: `https://infallible-shaw-gpsjwuc0lg.projects.oryapis.com`
+- Ory SDK URL: `https://auth.skillgrid.tech`
 - Ory Project ID: `cd3eac85-ed95-41dd-9969-9012ab8dea73`
 
 ### Authentication Proxy Setup
 
-To avoid CORS issues, the recommended approach is to set up an authentication proxy with your own subdomain:
+To avoid CORS issues, we use an authentication proxy with our own subdomain:
 
 1. Create a CNAME record for `auth.skillgrid.tech` pointing to `infallible-shaw-gpsjwuc0lg.projects.oryapis.com`
-2. Use the provided deployment script to set up the proxy:
-   ```bash
-   sudo ./deploy-auth-proxy.sh
-   ```
-
-This setup:
-- Creates a proxy at `auth.skillgrid.tech` that forwards requests to Ory
-- Updates SSL certificates to include the subdomain
-- Configures Nginx to handle CORS properly
-- Updates the application to use your custom domain for authentication
+2. Make sure the CNAME record is properly configured in your DNS settings
 
 ### Configuring Allowed Redirect URLs
 
@@ -104,7 +95,7 @@ docker-compose up --build
 # Or using Docker directly
 docker build -t skillgrid-frontend .
 docker run -d -p 80:80 \
-  -e REACT_APP_ORY_URL=https://infallible-shaw-gpsjwuc0lg.projects.oryapis.com \
+  -e REACT_APP_ORY_URL=https://auth.skillgrid.tech \
   skillgrid-frontend
 ```
 
