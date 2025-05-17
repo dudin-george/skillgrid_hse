@@ -35,6 +35,22 @@ This project uses Ory for authentication. The Ory configuration is:
 - Ory SDK URL: `https://infallible-shaw-gpsjwuc0lg.projects.oryapis.com`
 - Ory Project ID: `cd3eac85-ed95-41dd-9969-9012ab8dea73`
 
+### Authentication Proxy Setup
+
+To avoid CORS issues, the recommended approach is to set up an authentication proxy with your own subdomain:
+
+1. Create a CNAME record for `auth.skillgrid.tech` pointing to `infallible-shaw-gpsjwuc0lg.projects.oryapis.com`
+2. Use the provided deployment script to set up the proxy:
+   ```bash
+   sudo ./deploy-auth-proxy.sh
+   ```
+
+This setup:
+- Creates a proxy at `auth.skillgrid.tech` that forwards requests to Ory
+- Updates SSL certificates to include the subdomain
+- Configures Nginx to handle CORS properly
+- Updates the application to use your custom domain for authentication
+
 ### Configuring Allowed Redirect URLs
 
 If you want to use the `return_to` parameter for redirects after authentication, you must configure allowed redirect URLs in Ory:
