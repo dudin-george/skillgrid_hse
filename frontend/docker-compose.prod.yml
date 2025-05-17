@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_ORY_URL=https://auth.skillgrid.tech
+        - REACT_APP_API_URL=https://api.skillgrid.tech
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.prod.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt/live/skillgrid.tech-0002/fullchain.pem:/etc/ssl/certs/skillgrid/fullchain.pem
+      - /etc/letsencrypt/live/skillgrid.tech-0002/privkey.pem:/etc/ssl/certs/skillgrid/privkey.pem
+      - /etc/letsencrypt/live/skillgrid.tech-0002/chain.pem:/etc/ssl/certs/skillgrid/chain.pem
+    restart: unless-stopped
+    networks:
+      - skillgrid-network
+
+networks:
+  skillgrid-network:
+    driver: bridge 
