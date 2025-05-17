@@ -23,8 +23,8 @@ FROM nginx:alpine
 # Copy built assets from the build stage
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# We don't copy nginx.conf here because we'll mount it via docker-compose
+# for different environments (dev/prod)
 
 # Expose ports
 EXPOSE 80
