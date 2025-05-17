@@ -24,7 +24,7 @@ interface OryContextType {
 const OryContext = createContext<OryContextType | undefined>(undefined);
 
 // Ory project configuration
-const ORY_SDK_URL = process.env.REACT_APP_ORY_URL || "https://auth.skillgrid.tech";
+const ORY_SDK_URL = process.env.REACT_APP_ORY_URL || "http://auth.skillgrid.tech";
 const ORY_PROJECT_ID = "cd3eac85-ed95-41dd-9969-9012ab8dea73";
 
 // Get current origin for debugging
