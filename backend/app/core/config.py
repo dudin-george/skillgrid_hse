@@ -20,6 +20,20 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = Field(default="postgres", env="POSTGRES_PASSWORD")
     POSTGRES_DB: str = Field(default="skillgrid", env="POSTGRES_DB")
     
+    # Database URL (directly as a field)
+    DATABASE_URL: str = Field(
+        default_factory=lambda: os.getenv(
+            "DATABASE_URL",
+            f"postgresql://{{user}}:{{password}}@{{host}}:{{port}}/{{db}}".format(
+                user=os.getenv("POSTGRES_USER", "postgres"),
+                password=os.getenv("POSTGRES_PASSWORD", "postgres"),
+                host=os.getenv("POSTGRES_HOST", "postgres"),
+                port=os.getenv("POSTGRES_PORT", "5432"),
+                db=os.getenv("POSTGRES_DB", "skillgrid")
+            )
+        )
+    )
+    
     # API settings
     API_HOST: str = Field(default="0.0.0.0", env="API_HOST")
     API_PORT: int = Field(default=8000, env="API_PORT")
@@ -27,18 +41,9 @@ class Settings(BaseSettings):
     # CORS settings
     CORS_ORIGINS: list = ["*", "https://skillgrid.tech", "https://www.skillgrid.tech", "https://api.skillgrid.tech"]
     
-    # Computed properties
-    @property
-    def DATABASE_URL(self) -> str:
-        """Constructs database URL from components"""
-        return os.getenv(
-            "DATABASE_URL", 
-            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-        )
-    
+    # Alias for DATABASE_URL for Alembic
     @property
     def SQLALCHEMY_URL(self) -> str:
-        """Alias for DATABASE_URL for Alembic"""
         return self.DATABASE_URL
     
     class Config:
