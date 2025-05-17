@@ -93,26 +93,37 @@ To deploy to skillgrid.tech:
    cd skillgrid_hse/frontend
    ```
 
-2. Set up SSL certificate:
+2. Use the deployment script for a complete setup:
    ```bash
-   # Install certbot if not installed
-   sudo apt-get update
-   sudo apt-get install -y certbot
+   # Make the script executable
+   chmod +x deploy.sh
    
-   # Obtain SSL certificate 
-   sudo certbot certonly --standalone -d skillgrid.tech -d www.skillgrid.tech
+   # Run the deployment script (handles SSL, port setup, and deployment)
+   sudo ./deploy.sh
    ```
 
-3. Deploy with SSL:
-   ```bash
-   # Make the deployment script executable
-   chmod +x deploy-ssl.sh
-   
-   # Run the deployment script
-   sudo ./deploy-ssl.sh
-   ```
+The script will:
+- Check and open necessary ports (80, 443)
+- Set up SSL certificates with Let's Encrypt if needed
+- Copy SSL certificates to the proper location
+- Configure and start the Docker containers
 
 The application will be available at https://skillgrid.tech after deployment.
+
+#### Advanced Usage
+
+The deployment script supports individual steps:
+
+```bash
+# Check and configure ports only
+sudo ./deploy.sh ports
+
+# Set up SSL certificates only
+sudo ./deploy.sh ssl  
+
+# Deploy the application only (assuming certificates are set up)
+sudo ./deploy.sh app
+```
 
 ### SSL Certificate Renewal
 
@@ -120,10 +131,10 @@ SSL certificates from Let's Encrypt expire after 90 days. Set up automatic renew
 
 ```bash
 # Add to crontab
-echo "0 0,12 * * * root certbot renew --quiet && cd /home/skillgrid_hse/frontend && ./deploy-ssl.sh" | sudo tee -a /etc/crontab
+echo "0 0,12 * * * root certbot renew --quiet && cd /home/skillgrid_hse/frontend && ./deploy.sh app" | sudo tee -a /etc/crontab
 ```
 
-This will check twice daily if the certificate needs renewal and redeploy the application if it does.
+This will check twice daily if the certificate needs renewal and redeploy the application if it was renewed.
 
 ## Tech Stack
 

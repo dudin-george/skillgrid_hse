@@ -1,4 +1,4 @@
-.PHONY: dev prod build clean ssl restart logs deploy
+.PHONY: dev prod build clean ssl deploy logs
 
 # Development environment
 dev:
@@ -16,20 +16,18 @@ build:
 clean:
 	docker-compose -f docker-compose.prod.yml down -v
 
-# Deploy with SSL (make sure to run certbot first)
+# Set up SSL certificates
 ssl:
-	chmod +x deploy-ssl.sh
-	sudo ./deploy-ssl.sh
+	sudo ./deploy.sh ssl
 
-# Restart containers
-restart:
-	docker-compose -f docker-compose.prod.yml restart
+# Deploy with SSL
+deploy:
+	sudo ./deploy.sh
 
 # View logs
 logs:
 	docker-compose -f docker-compose.prod.yml logs -f
 
-# Pull latest changes and redeploy with SSL
-deploy:
-	git pull
-	make ssl 
+# Only deploy application (assumes SSL is set up)
+app:
+	sudo ./deploy.sh app 
