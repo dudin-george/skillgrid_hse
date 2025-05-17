@@ -24,8 +24,9 @@ interface OryContextType {
 const OryContext = createContext<OryContextType | undefined>(undefined);
 
 // Ory project configuration
-const ORY_SDK_URL = process.env.REACT_APP_ORY_URL || "https://infallible-shaw-gpsjwuc0lg.projects.oryapis.com";
+const ORY_SDK_URL = process.env.REACT_APP_ORY_URL || "https://auth.skillgrid.tech";
 const ORY_PROJECT_ID = "cd3eac85-ed95-41dd-9969-9012ab8dea73";
+// const ORY_SDK_URL = process.env.REACT_APP_ORY_URL || "https://infallible-shaw-gpsjwuc0lg.projects.oryapis.com";
 
 // Get current origin for debugging
 const CURRENT_ORIGIN = window.location.origin;
@@ -120,13 +121,13 @@ export const OryProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (corsError) {
       console.error(`
 =======================================================================
-CORS ERROR DETECTED: Your domain (${CURRENT_ORIGIN}) is not allowed in Ory CORS settings
+CORS ERROR DETECTED: Unable to connect to auth.skillgrid.tech
 
-Please update your Ory CORS configuration to include this domain:
-1. Go to https://console.ory.sh/
-2. Select project with ID: ${ORY_PROJECT_ID}
-3. Navigate to Configuration → CORS
-4. Add "${CURRENT_ORIGIN}" to allowed_origins list
+This application uses a proxy domain (auth.skillgrid.tech) to communicate with Ory.
+If you're seeing this error, please check:
+1. The auth.skillgrid.tech DNS record is properly configured
+2. The auth proxy server is running correctly
+3. Your network allows connections to auth.skillgrid.tech
 =======================================================================
       `);
     }
