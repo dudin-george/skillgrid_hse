@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     API_PORT: int = Field(default=8000, env="API_PORT")
     
     # CORS settings
-    CORS_ORIGINS: list = ["*"]
+    CORS_ORIGINS: list = ["*", "https://skillgrid.tech", "https://www.skillgrid.tech", "https://api.skillgrid.tech"]
     
     # Computed properties
     @property
