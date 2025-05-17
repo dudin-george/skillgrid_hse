@@ -58,10 +58,40 @@ export const OryProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const url = new URL(window.location.href);
     const flowId = url.searchParams.get('flow');
     
-    // Check session on mount
-    const checkSession = async () => {
+    // Check if we've just returned from an Ory authentication flow
+    const isReturningFromOry = () => {
+      // Check for common return parameters from Ory
+      const fromOry = url.searchParams.has('flow') || 
+                     url.searchParams.has('id') || 
+                     url.pathname.includes('/dashboard') &&
+                     document.referrer.includes('auth.skillgrid.tech');
+      
+      if (fromOry) {
+        console.log('Detected return from Ory authentication flow');
+      }
+      
+      return fromOry;
+    };
+    
+    // Check session on mount with retry
+    const checkSession = async (retryCount = 0) => {
       try {
-        console.log(`Checking session from origin: ${CURRENT_ORIGIN}`);
+        // If returning from Ory, wait a bit longer before the first attempt
+        // to allow cookies to be properly set
+        if (retryCount === 0 && isReturningFromOry() && !flowId) {
+          console.log('Returning from Ory flow, delaying first session check...');
+          setTimeout(() => checkSession(retryCount), 1500);
+          return;
+        }
+        
+        console.log(`Checking session from origin: ${CURRENT_ORIGIN} (attempt ${retryCount + 1})`);
+        console.log(`Using Ory SDK URL: ${ORY_SDK_URL}`);
+        console.log('Sending request with credentials and headers:', {
+          withCredentials: true,
+          'X-Ory-Project-Id': ORY_PROJECT_ID,
+          'Origin': CURRENT_ORIGIN
+        });
+        
         const { data } = await ory.toSession();
         setIsAuthenticated(!!data.active);
         setCorsError(false);
@@ -74,9 +104,11 @@ export const OryProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             traits: identity.traits as UserInfo['traits']
           });
           console.log("Session active, user authenticated");
+        } else {
+          console.log("Session checked, but no active identity found");
         }
       } catch (error: any) {
-        console.error('Session check failed:', error);
+        console.error(`Session check failed (attempt ${retryCount + 1}):`, error);
         
         // Check if this is a CORS error
         if (error.message && error.message.includes('NetworkError')) {
@@ -84,10 +116,19 @@ export const OryProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           setCorsError(true);
         }
         
+        // Retry logic - wait and retry if we haven't exceeded max retries
+        if (retryCount < 2) { // Try up to 3 times total
+          console.log(`Retrying session check in 1 second... (${retryCount + 1}/3)`);
+          setTimeout(() => checkSession(retryCount + 1), 1000);
+          return; // Exit early, don't update state yet
+        }
+        
         setIsAuthenticated(false);
         setUserInfo(null);
       } finally {
-        setIsLoading(false);
+        if (retryCount === 2 || !corsError) { // Only set loading to false on final attempt or success
+          setIsLoading(false);
+        }
       }
     };
     
@@ -97,13 +138,31 @@ export const OryProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const login = () => {
     // Redirect to the Ory login page with return_to parameter
     const returnUrl = `${CURRENT_ORIGIN}/dashboard`;
-    window.location.href = `${ORY_SDK_URL}/ui/login?project=${ORY_PROJECT_ID}&return_to=${encodeURIComponent(returnUrl)}`;
+    
+    // Add a timestamp to avoid caching issues
+    const timestamp = new Date().getTime();
+    
+    // Clear any existing session cookies before redirecting
+    document.cookie = "ory_kratos_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    
+    // Redirect to Ory login
+    console.log(`Redirecting to login: ${ORY_SDK_URL}/ui/login?project=${ORY_PROJECT_ID}&return_to=${encodeURIComponent(returnUrl)}&t=${timestamp}`);
+    window.location.href = `${ORY_SDK_URL}/ui/login?project=${ORY_PROJECT_ID}&return_to=${encodeURIComponent(returnUrl)}&t=${timestamp}`;
   };
 
   const signup = () => {
     // Redirect to the Ory registration page with return_to parameter
     const returnUrl = `${CURRENT_ORIGIN}/dashboard`;
-    window.location.href = `${ORY_SDK_URL}/ui/registration?project=${ORY_PROJECT_ID}&return_to=${encodeURIComponent(returnUrl)}`;
+    
+    // Add a timestamp to avoid caching issues
+    const timestamp = new Date().getTime();
+    
+    // Clear any existing session cookies before redirecting
+    document.cookie = "ory_kratos_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    
+    // Redirect to Ory registration
+    console.log(`Redirecting to signup: ${ORY_SDK_URL}/ui/registration?project=${ORY_PROJECT_ID}&return_to=${encodeURIComponent(returnUrl)}&t=${timestamp}`);
+    window.location.href = `${ORY_SDK_URL}/ui/registration?project=${ORY_PROJECT_ID}&return_to=${encodeURIComponent(returnUrl)}&t=${timestamp}`;
   };
 
   const logout = async () => {
@@ -124,9 +183,23 @@ CORS ERROR DETECTED: Unable to connect to auth.skillgrid.tech
 
 This application uses a proxy domain (auth.skillgrid.tech) to communicate with Ory.
 If you're seeing this error, please check:
-1. The auth.skillgrid.tech DNS record is properly configured
-2. The auth proxy server is running correctly
-3. Your network allows connections to auth.skillgrid.tech
+
+1. Browser Console: Look for specific CORS error messages
+   - Check if preflight OPTIONS requests are failing
+   - Look for missing Access-Control-Allow-Origin headers
+
+2. Ory CORS Configuration:
+   - Verify that https://skillgrid.tech is in the allowed_origins list
+   - Ensure allow_credentials is set to true
+   - Check that all necessary headers are included
+
+3. Try clearing browser cache and cookies:
+   - Delete all cookies for skillgrid.tech and auth.skillgrid.tech
+   - Clear browser cache completely
+
+4. Try using Chrome or Firefox, as Safari has stricter CORS policies
+
+For developers: Run the test-ory-conn.sh script to diagnose connection issues.
 =======================================================================
       `);
     }
