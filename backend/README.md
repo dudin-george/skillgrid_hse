@@ -37,7 +37,10 @@ That's it! The script will:
 
 The application will be available at:
 - Development: https://localhost
-- Production: https://skillgrid.tech
+- Production:
+  - Main website: https://skillgrid.tech
+  - API: https://www.api.skillgrid.tech
+  - API Documentation: https://www.api.skillgrid.tech/docs
 
 ## Managing the Application
 
