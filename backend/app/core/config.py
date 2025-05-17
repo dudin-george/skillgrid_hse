@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     API_PORT: int = Field(default=8000, env="API_PORT")
     
     # CORS settings
-    CORS_ORIGINS: list = ["*", "https://skillgrid.tech", "https://www.skillgrid.tech", "https://api.skillgrid.tech"]
+    CORS_ORIGINS: list = ["https://www.api.skillgrid.tech"]
     
     # Alias for DATABASE_URL for Alembic
     @property
