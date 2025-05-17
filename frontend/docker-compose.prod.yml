@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - REACT_APP_ORY_URL=https://infallible-shaw-gpsjwuc0lg.projects.oryapis.com
+        - REACT_APP_ORY_URL=https://auth.skillgrid.tech
         - REACT_APP_API_URL=https://api.skillgrid.tech
     environment:
       - NODE_ENV=production

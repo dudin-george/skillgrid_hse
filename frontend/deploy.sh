@@ -52,9 +52,14 @@ setup_ssl() {
   # Check if certificate already exists
   if [ ! -d "/etc/letsencrypt/live/skillgrid.tech" ] && [ ! -d "/etc/letsencrypt/live/skillgrid.tech-0001" ] && [ ! -d "/etc/letsencrypt/live/skillgrid.tech-0002" ]; then
     echo "Obtaining SSL certificate..."
-    certbot certonly --standalone -d skillgrid.tech -d www.skillgrid.tech
+    certbot certonly --standalone -d skillgrid.tech -d www.skillgrid.tech -d auth.skillgrid.tech
   else
-    echo "Certificate already exists."
+    echo "Certificate already exists. Checking if auth.skillgrid.tech is included..."
+    # Check if we need to renew to add auth.skillgrid.tech
+    if ! certbot certificates | grep -q "auth.skillgrid.tech"; then
+      echo "Adding auth.skillgrid.tech to the certificate..."
+      certbot certonly --standalone --expand -d skillgrid.tech -d www.skillgrid.tech -d auth.skillgrid.tech
+    fi
   fi
   
   # Find the certificate directory
@@ -110,7 +115,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - REACT_APP_ORY_URL=https://infallible-shaw-gpsjwuc0lg.projects.oryapis.com
+        - REACT_APP_ORY_URL=https://auth.skillgrid.tech
         - REACT_APP_API_URL=https://api.skillgrid.tech
     environment:
       - NODE_ENV=production
