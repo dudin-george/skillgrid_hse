@@ -1,19 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+from app.core.config import settings
 
-# Database URL
-SQLALCHEMY_DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/skillgrid"
-)
-
-# Create engine
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# Create engine using the settings
+engine = create_engine(settings.DATABASE_URL)
 
 # Create session
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

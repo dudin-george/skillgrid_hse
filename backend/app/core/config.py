@@ -1,21 +1,49 @@
 import os
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from pydantic_settings import BaseSettings
+from pydantic import Field
 
 # Load environment variables
 load_dotenv()
 
-class Settings(BaseModel):
+class Settings(BaseSettings):
+    # App settings
     APP_NAME: str = "SkillGrid API"
     APP_VERSION: str = "0.1.0"
     APP_DESCRIPTION: str = "Backend API for SkillGrid application"
-    DEBUG: bool = os.getenv("DEBUG", "True").lower() in ("true", "1", "t")
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/skillgrid")
-    POSTGRES_USER: str = os.getenv("POSTGRES_USER", "postgres")
-    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "postgres")
-    POSTGRES_DB: str = os.getenv("POSTGRES_DB", "skillgrid")
-    POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "localhost")
-    POSTGRES_PORT: str = os.getenv("POSTGRES_PORT", "5432")
+    DEBUG: bool = Field(default_factory=lambda: os.getenv("DEBUG", "True").lower() in ("true", "1", "t"))
+    
+    # Database settings
+    POSTGRES_HOST: str = Field(default="postgres", env="POSTGRES_HOST")
+    POSTGRES_PORT: str = Field(default="5432", env="POSTGRES_PORT")
+    POSTGRES_USER: str = Field(default="postgres", env="POSTGRES_USER")
+    POSTGRES_PASSWORD: str = Field(default="postgres", env="POSTGRES_PASSWORD")
+    POSTGRES_DB: str = Field(default="skillgrid", env="POSTGRES_DB")
+    
+    # API settings
+    API_HOST: str = Field(default="0.0.0.0", env="API_HOST")
+    API_PORT: int = Field(default=8000, env="API_PORT")
+    
+    # CORS settings
+    CORS_ORIGINS: list = ["*"]
+    
+    # Computed properties
+    @property
+    def DATABASE_URL(self) -> str:
+        """Constructs database URL from components"""
+        return os.getenv(
+            "DATABASE_URL", 
+            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
+    
+    @property
+    def SQLALCHEMY_URL(self) -> str:
+        """Alias for DATABASE_URL for Alembic"""
+        return self.DATABASE_URL
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
 
-# Create settings instance
+# Create a global instance of the settings
 settings = Settings() 
