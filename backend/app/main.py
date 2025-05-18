@@ -4,6 +4,7 @@ import uvicorn
 
 from app.core.config import settings
 from app.api.routes import router
+from app.db.init_db import init_db
 
 # Create FastAPI app instance
 app = FastAPI(
@@ -20,6 +21,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Initialize database tables on startup
+@app.on_event("startup")
+async def startup_event():
+    init_db()
 
 # Root endpoint
 @app.get("/")

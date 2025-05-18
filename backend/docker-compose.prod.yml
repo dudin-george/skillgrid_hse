@@ -20,7 +20,6 @@ services:
       - DEBUG=false
     command: >
       bash -c "sleep 5 && 
-               alembic upgrade head && 
                uvicorn app.main:app --host 0.0.0.0 --port 8000"
     networks:
       - skillgrid-network
