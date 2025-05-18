@@ -56,4 +56,5 @@ class UserTraits(BaseModel):
 
 class UserInfo(BaseModel):
     """User information matching the Ory schema structure"""
-    traits: UserTraits 
+    traits: UserTraits
+    user_id: UUID 

@@ -33,12 +33,20 @@ async def auth(request: Request):
         user_data = await ory_client.whoami(cookies)
         
         # Extract and validate user traits
-        traits = user_data.get("identity", {}).get("traits", {})
+        identity = user_data.get("identity", {})
+        traits = identity.get("traits", {})
+        user_id = identity.get("id")
         
         if not traits:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="User identity traits missing in Ory response"
+            )
+            
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="User ID missing in Ory response"
             )
         
         # Validate the traits match our expected schema
@@ -59,7 +67,7 @@ async def auth(request: Request):
             )
         
         # Return in the expected format
-        return UserInfo(traits=validated_traits)
+        return UserInfo(traits=validated_traits, user_id=user_id)
     except HTTPException as e:
         # Re-raise HTTP exceptions
         raise e
