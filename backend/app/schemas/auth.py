@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, List
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, Dict, Any, List, Literal
 from uuid import UUID
 from datetime import datetime
 
@@ -43,7 +43,17 @@ class AuthResponse(BaseModel):
         )
 
 
+class UserTraits(BaseModel):
+    """User traits according to the Ory schema"""
+    email: EmailStr = Field(..., title="E-Mail", max_length=320)
+    person_type: Literal["candidate", "recruiter"] = Field(..., title="Person Type")
+    name: Optional[str] = Field(None, title="First Name")
+    surname: Optional[str] = Field(None, title="Last Name")
+    
+    class Config:
+        extra = "forbid"
+
+
 class UserInfo(BaseModel):
-    """Simplified user information returned by the auth endpoint"""
-    id: UUID
-    traits: Dict[str, Any] 
+    """User information matching the Ory schema structure"""
+    traits: UserTraits 
