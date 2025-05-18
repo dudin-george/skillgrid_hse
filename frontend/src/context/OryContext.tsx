@@ -7,6 +7,8 @@ interface UserInfo {
   traits?: {
     email?: string;
     person_type?: 'candidate' | 'recruiter';
+    name?: string;
+    surname?: string;
     [key: string]: any;
   };
 }
@@ -53,11 +55,24 @@ export const OryProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   );
 
   useEffect(() => {
+    // Check if we're on the dashboard or other protected routes
+    // that will handle authentication via the backend API
+    const currentPath = window.location.pathname;
+    const isProtectedRoute = ['/dashboard'].includes(currentPath);
+    
+    // If we're on a protected route, we don't need to check with Ory directly
+    // as the page will handle authentication via the backend
+    if (isProtectedRoute) {
+      console.log('On protected route, skipping direct Ory authentication check');
+      setIsLoading(false);
+      return;
+    }
+    
     // Check if we're returning from Ory with a flow ID
     const url = new URL(window.location.href);
     const flowId = url.searchParams.get('flow');
     
-    // Check session on mount
+    // For other routes, check session on mount
     const checkSession = async () => {
       try {
         console.log(`Checking session from origin: ${CURRENT_ORIGIN}`);
