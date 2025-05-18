@@ -6,7 +6,6 @@ from app.schemas.company import CompanyResponse
 class JobPostingBase(BaseModel):
     name: str
     description: Optional[str] = None
-    initiator_id: Optional[UUID] = None
     status: Optional[str] = "open"
 
 class JobPostingCreate(JobPostingBase):
@@ -16,11 +15,14 @@ class JobPostingUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = None
-    initiator_id: Optional[UUID] = None
     final_candidate_id: Optional[UUID] = None
 
-class JobPostingResponse(JobPostingBase):
+class JobPostingResponse(BaseModel):
     id: UUID
+    name: str
+    description: Optional[str] = None
+    initiator_id: Optional[UUID] = None
+    status: Optional[str] = "open"
     final_candidate_id: Optional[UUID] = None
     company: Optional[CompanyResponse] = None
     

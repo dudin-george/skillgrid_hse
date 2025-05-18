@@ -80,6 +80,49 @@ class OryClient:
         except httpx.RequestError as exc:
             raise HTTPException(status_code=500, detail=f"Error connecting to Ory admin API: {str(exc)}")
     
+    async def update_identity_metadata(self, identity_id: str, metadata: Dict[str, Any]) -> dict:
+        """
+        Update a user's metadata in Ory
+        
+        Args:
+            identity_id: The Ory identity ID to update
+            metadata: The metadata to store
+            
+        Returns:
+            The updated identity data from Ory
+            
+        Raises:
+            HTTPException: If the request fails or returns an error
+        """
+        try:
+            # First get the current identity
+            current_identity = await self.get_identity(identity_id)
+            
+            # Create the patch data
+            patch_data = {
+                "metadata_public": metadata
+            }
+            
+            # Update the identity
+            response = await self.admin_http_client.put(
+                f"/admin/identities/{identity_id}",
+                json=patch_data
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            elif response.status_code == 404:
+                raise HTTPException(status_code=404, detail="Identity not found")
+            elif response.status_code == 401:
+                raise HTTPException(status_code=401, detail="Not authorized to access Ory admin API")
+            else:
+                raise HTTPException(
+                    status_code=response.status_code, 
+                    detail=f"Ory admin error: {response.text}"
+                )
+        except httpx.RequestError as exc:
+            raise HTTPException(status_code=500, detail=f"Error connecting to Ory admin API: {str(exc)}")
+    
     async def close(self):
         """Close the HTTP client sessions"""
         await self.http_client.aclose()
