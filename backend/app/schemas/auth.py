@@ -57,4 +57,24 @@ class UserTraits(BaseModel):
 class UserInfo(BaseModel):
     """User information matching the Ory schema structure"""
     traits: UserTraits
-    user_id: UUID 
+    user_id: UUID
+
+
+class AdminIdentityResponse(BaseModel):
+    """Parsed response from Ory Admin API for identities"""
+    id: UUID
+    state: str
+    traits: UserTraits
+    created_at: datetime
+    updated_at: datetime
+    
+    @classmethod
+    def from_ory_admin_response(cls, data: dict) -> "AdminIdentityResponse":
+        """Create an AdminIdentityResponse from an Ory admin API response"""
+        return cls(
+            id=data["id"],
+            state=data["state"],
+            traits=UserTraits(**data["traits"]),
+            created_at=data["created_at"],
+            updated_at=data["updated_at"]
+        ) 

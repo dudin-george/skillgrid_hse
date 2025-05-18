@@ -11,6 +11,8 @@ class OryConfig:
     ORY_PROJECT_ID = "cd3eac85-ed95-41dd-9969-9012ab8dea73"
     ORY_PROJECT_SLUG = "infallible-shaw-gpsjwuc0lg"
     ORY_BASE_URL = "https://auth.skillgrid.tech"
+    ORY_ADMIN_BASE_URL = "https://infallible-shaw-gpsjwuc0lg.projects.oryapis.com"
+    ORY_ADMIN_API_KEY = "ory_pat_e9NRxnc9W9vDIYjYqSlfgrGqEHo6zgex"
     
 
 class OryClient:
@@ -18,7 +20,14 @@ class OryClient:
     
     def __init__(self):
         self.base_url = OryConfig.ORY_BASE_URL
+        self.admin_base_url = OryConfig.ORY_ADMIN_BASE_URL
+        self.admin_api_key = OryConfig.ORY_ADMIN_API_KEY
         self.http_client = httpx.AsyncClient(base_url=self.base_url, follow_redirects=True)
+        self.admin_http_client = httpx.AsyncClient(
+            base_url=self.admin_base_url,
+            headers={"Authorization": f"Bearer {self.admin_api_key}"},
+            follow_redirects=True
+        )
     
     async def whoami(self, cookies: dict) -> dict:
         """Get the current user's session information using session cookie"""
@@ -41,9 +50,40 @@ class OryClient:
         except httpx.RequestError as exc:
             raise HTTPException(status_code=500, detail=f"Error connecting to Ory: {str(exc)}")
     
+    async def get_identity(self, identity_id: str) -> dict:
+        """
+        Get a user's identity information from the Ory Admin API
+        
+        Args:
+            identity_id: The Ory identity ID to fetch
+            
+        Returns:
+            The identity data from Ory
+            
+        Raises:
+            HTTPException: If the request fails or returns an error
+        """
+        try:
+            response = await self.admin_http_client.get(f"/admin/identities/{identity_id}")
+            
+            if response.status_code == 200:
+                return response.json()
+            elif response.status_code == 404:
+                raise HTTPException(status_code=404, detail="Identity not found")
+            elif response.status_code == 401:
+                raise HTTPException(status_code=401, detail="Not authorized to access Ory admin API")
+            else:
+                raise HTTPException(
+                    status_code=response.status_code, 
+                    detail=f"Ory admin error: {response.text}"
+                )
+        except httpx.RequestError as exc:
+            raise HTTPException(status_code=500, detail=f"Error connecting to Ory admin API: {str(exc)}")
+    
     async def close(self):
-        """Close the HTTP client session"""
+        """Close the HTTP client sessions"""
         await self.http_client.aclose()
+        await self.admin_http_client.aclose()
 
 
 # Create a global instance of the Ory client

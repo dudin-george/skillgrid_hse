@@ -2,7 +2,7 @@ from fastapi import Depends, Request, HTTPException, status
 from typing import Dict, Any, Optional, Annotated, Union
 from uuid import UUID
 from app.core.ory import verify_auth, ory_client
-from app.schemas.auth import UserTraits
+from app.schemas.auth import UserTraits, AdminIdentityResponse
 
 class AuthDependency:
     """
@@ -62,6 +62,40 @@ class AuthDependency:
         Dependency for endpoints requiring recruiter user type
         """
         return await AuthDependency.require_person_type(request, "recruiter")
+    
+    @staticmethod
+    async def get_identity_by_id(identity_id: str) -> Dict[str, Any]:
+        """
+        Get a user's complete identity information by ID
+        
+        This method uses the Ory Admin API to fetch the identity information
+        for any user based on their ID. This is useful when you need to get
+        information about users other than the currently authenticated one.
+        
+        Args:
+            identity_id: The Ory identity ID to fetch
+            
+        Returns:
+            The complete identity data from Ory
+        """
+        return await ory_client.get_identity(identity_id)
+    
+    @staticmethod
+    async def get_parsed_identity_by_id(identity_id: str) -> AdminIdentityResponse:
+        """
+        Get a parsed and validated user identity by ID
+        
+        This method fetches the identity using the admin API and returns
+        a validated Pydantic model with the most commonly needed fields.
+        
+        Args:
+            identity_id: The Ory identity ID to fetch
+            
+        Returns:
+            AdminIdentityResponse: A parsed and validated identity response
+        """
+        identity_data = await ory_client.get_identity(identity_id)
+        return AdminIdentityResponse.from_ory_admin_response(identity_data)
 
 
 # Common dependencies for use in routes
@@ -69,4 +103,6 @@ get_user_id = AuthDependency.get_user_id
 get_user_traits = AuthDependency.get_user_traits
 require_candidate = AuthDependency.require_candidate
 require_recruiter = AuthDependency.require_recruiter
-authenticated_user = AuthDependency.authenticated_user 
+authenticated_user = AuthDependency.authenticated_user
+get_identity_by_id = AuthDependency.get_identity_by_id
+get_parsed_identity_by_id = AuthDependency.get_parsed_identity_by_id 
