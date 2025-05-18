@@ -24,7 +24,7 @@ cd skillgrid_hse/backend
 git clone https://github.com/your-username/skillgrid_hse.git
 cd skillgrid_hse/backend
 
-# Run the deployment script (defaults to skillgrid.tech)
+# Run the deployment script (defaults to api.skillgrid.tech)
 ./deploy.sh
 # Or run with option 1 when prompted
 ```
@@ -38,9 +38,8 @@ That's it! The script will:
 The application will be available at:
 - Development: https://localhost
 - Production:
-  - Main website: https://skillgrid.tech
-  - API: https://www.api.skillgrid.tech
-  - API Documentation: https://www.api.skillgrid.tech/docs
+  - API: https://api.skillgrid.tech
+  - API Documentation: https://api.skillgrid.tech/docs
 
 ## Managing the Application
 
