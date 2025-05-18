@@ -5,8 +5,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - REACT_APP_ORY_URL=https://auth.skillgrid.tech
+        - REACT_APP_API_URL=https://skillgrid.tech
     ports:
       - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
     restart: unless-stopped
     networks:
       - skillgrid-network

@@ -24,7 +24,7 @@ npm start
 Create a `.env.local` file with the following variables:
 
 ```
-REACT_APP_API_URL=https://api.skillgrid.tech
+REACT_APP_API_URL=https://skillgrid.tech
 REACT_APP_ORY_URL=https://auth.skillgrid.tech
 ```
 
@@ -101,45 +101,53 @@ docker run -d -p 80:80 \
 
 ### Production Deployment
 
-To deploy to skillgrid.tech:
+The deployment script is designed to work on a fresh server with minimal setup. It can automatically:
 
-1. Clone the repository on your server:
-   ```bash
-   git clone https://github.com/youruser/skillgrid_hse.git
-   cd skillgrid_hse/frontend
-   ```
+- Install Git if needed (when using repository URL)
+- Install Docker and Docker Compose if needed
+- Set up SSL certificates with Let's Encrypt
+- Configure ports and firewall
+- Deploy the application
 
-2. Use the deployment script for a complete setup:
-   ```bash
-   # Make the script executable
-   chmod +x deploy.sh
-   
-   # Run the deployment script (handles SSL, port setup, and deployment)
-   sudo ./deploy.sh
-   ```
+#### Quick Deployment on a New Server
 
-The script will:
-- Check and open necessary ports (80, 443)
-- Set up SSL certificates with Let's Encrypt if needed
-- Copy SSL certificates to the proper location
-- Configure and start the Docker containers
-
-The application will be available at https://skillgrid.tech after deployment.
-
-#### Advanced Usage
-
-The deployment script supports individual steps:
+To deploy on a completely new server:
 
 ```bash
+# Option 1: Download and run the deployment script directly
+curl -O https://raw.githubusercontent.com/yourusername/skillgrid_hse/main/frontend/deploy.sh
+chmod +x deploy.sh
+sudo ./deploy.sh https://github.com/yourusername/skillgrid_hse.git
+```
+
+```bash
+# Option 2: Clone the repository first, then run the script
+git clone https://github.com/yourusername/skillgrid_hse.git
+cd skillgrid_hse/frontend
+chmod +x deploy.sh
+sudo ./deploy.sh
+```
+
+#### Deployment Options
+
+```bash
+# View all deployment options
+sudo ./deploy.sh help
+
+# Install only Docker and Docker Compose
+sudo ./deploy.sh docker
+
 # Check and configure ports only
 sudo ./deploy.sh ports
 
 # Set up SSL certificates only
 sudo ./deploy.sh ssl  
 
-# Deploy the application only (assuming certificates are set up)
+# Deploy the application only (assumes dependencies are installed)
 sudo ./deploy.sh app
 ```
+
+The application will be available at https://skillgrid.tech after deployment.
 
 ### SSL Certificate Renewal
 
@@ -162,7 +170,7 @@ This will check twice daily if the certificate needs renewal and redeploy the ap
 
 ## API Integration
 
-The backend API is available at www.api.skillgrid.tech/docs for reference.
+The backend API is available at skillgrid.tech/api for reference.
 
 ## License
 

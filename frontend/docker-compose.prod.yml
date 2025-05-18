@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
       args:
         - REACT_APP_ORY_URL=https://auth.skillgrid.tech
-        - REACT_APP_API_URL=https://api.skillgrid.tech
+        - REACT_APP_API_URL=https://skillgrid.tech
     environment:
       - NODE_ENV=production
     ports:
