@@ -2,7 +2,7 @@ import os
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
 import httpx
-from fastapi import Request, HTTPException, Depends
+from fastapi import Request, HTTPException, Depends, Header
 from app.core.config import settings
 
 
@@ -18,14 +18,14 @@ class OryClient:
     
     def __init__(self):
         self.base_url = OryConfig.ORY_BASE_URL
-        self.http_client = httpx.AsyncClient(base_url=self.base_url)
+        self.http_client = httpx.AsyncClient(base_url=self.base_url, follow_redirects=True)
     
     async def whoami(self, cookies: dict) -> dict:
-        """Get the current user's session information"""
+        """Get the current user's session information using session cookie"""
         try:
             # Pass the cookie from the frontend to Ory
             response = await self.http_client.get(
-                "/api/kratos/public/sessions/whoami",
+                "/sessions/whoami",
                 cookies=cookies
             )
             
@@ -54,10 +54,7 @@ async def verify_auth(request: Request) -> Dict[str, Any]:
     """
     Dependency for verifying authentication
     
-    Can be used on routes that require authentication:
-    @router.get("/protected")
-    async def protected_route(user_data: dict = Depends(verify_auth)):
-        return {"message": f"Hello, {user_data['identity']['traits']['email']}"}
+    Extracts the session cookie from the request and verifies it with Ory
     """
     cookies = request.cookies
     return await ory_client.whoami(cookies) 

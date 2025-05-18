@@ -1,19 +1,19 @@
 from fastapi import APIRouter, Depends, Request, Response, HTTPException, status
 from fastapi.responses import JSONResponse
 from app.core.ory import ory_client, verify_auth
-from app.schemas.auth import AuthResponse
-from typing import Dict, Any
+from app.schemas.auth import AuthResponse, UserInfo
+from typing import Dict, Any, Optional
 
 router = APIRouter()
 
 
-@router.get("/whoami", response_model=AuthResponse)
-async def whoami(request: Request):
+@router.get("", response_model=UserInfo)
+async def auth(request: Request):
     """
-    Get the current authenticated user's information based on their session cookie
+    Get the current authenticated user's information
     
-    This endpoint proxies the request to Ory Kratos whoami endpoint, passing along
-    any cookies from the original request.
+    This endpoint proxies the request to Ory Kratos and returns
+    the user's traits in a simplified format.
     """
     try:
         # Get all cookies from the request
@@ -22,8 +22,11 @@ async def whoami(request: Request):
         # Call Ory's whoami endpoint with the cookies
         user_data = await ory_client.whoami(cookies)
         
-        # Transform to our response schema
-        return AuthResponse.from_ory_session(user_data)
+        # Extract user traits and ID
+        return {
+            "id": user_data["identity"]["id"],
+            "traits": user_data["identity"]["traits"]
+        }
     except HTTPException as e:
         # Re-raise HTTP exceptions
         raise e

@@ -40,4 +40,10 @@ class AuthResponse(BaseModel):
         return cls(
             session=OrySession(**ory_data),
             user_id=ory_data["identity"]["id"]
-        ) 
+        )
+
+
+class UserInfo(BaseModel):
+    """Simplified user information returned by the auth endpoint"""
+    id: UUID
+    traits: Dict[str, Any] 
