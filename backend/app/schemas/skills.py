@@ -29,4 +29,27 @@ class DomainResponse(BaseModel):
         from_attributes = True
 
 class DomainListResponse(BaseModel):
-    domains: List[DomainResponse] 
+    domains: List[DomainResponse]
+
+class SkillInPresetResponse(BaseModel):
+    id: UUID
+    name: str
+    domain_name: str
+    level: int
+    importance: int
+    
+    class Config:
+        from_attributes = True
+
+class SkillPresetResponse(BaseModel):
+    id: UUID
+    name: str
+    description: Optional[str] = None
+    complexity_level: int
+    skills: List[SkillInPresetResponse]
+    
+    class Config:
+        from_attributes = True
+
+class SkillPresetListResponse(BaseModel):
+    skill_presets: List[SkillPresetResponse] 
