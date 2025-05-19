@@ -225,13 +225,6 @@ const AssessmentResultsPage: React.FC = () => {
                             <span className="text-white text-xs font-semibold">{skillData.score}%</span>
                           </div>
                         </div>
-                        
-                        {/* Subskills */}
-                        <div className="pl-4 py-2">
-                          <p className="text-sm text-gray-500">
-                            <span className="font-medium">Covered topics:</span> {skillData.subskills.join(", ")}
-                          </p>
-                        </div>
                       </div>
                     ))}
                   </div>
