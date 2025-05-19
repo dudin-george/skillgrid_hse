@@ -58,7 +58,7 @@ export const OryProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Check if we're on the dashboard or other protected routes
     // that will handle authentication via the backend API
     const currentPath = window.location.pathname;
-    const isProtectedRoute = ['/dashboard'].includes(currentPath);
+    const isProtectedRoute = ['/dashboard', '/vacancies'].includes(currentPath);
     
     // If we're on a protected route, we don't need to check with Ory directly
     // as the page will handle authentication via the backend
@@ -110,13 +110,13 @@ export const OryProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const login = () => {
     // Redirect to the Ory login page with return_to parameter
-    const returnUrl = `${CURRENT_ORIGIN}/dashboard`;
+    const returnUrl = `${CURRENT_ORIGIN}/vacancies`;
     window.location.href = `${ORY_SDK_URL}/ui/login?project=${ORY_PROJECT_ID}&return_to=${encodeURIComponent(returnUrl)}`;
   };
 
   const signup = () => {
     // Redirect to the Ory registration page with return_to parameter
-    const returnUrl = `${CURRENT_ORIGIN}/dashboard`;
+    const returnUrl = `${CURRENT_ORIGIN}/vacancies`;
     window.location.href = `${ORY_SDK_URL}/ui/registration?project=${ORY_PROJECT_ID}&return_to=${encodeURIComponent(returnUrl)}`;
   };
 

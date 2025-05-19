@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useOry } from '../context/OryContext';
 
 // Sample job data (in a real app, this would come from an API)
 const sampleJobs = [
@@ -40,6 +42,60 @@ const sampleJobs = [
 ];
 
 const VacanciesPage: React.FC = () => {
+  const { isLoading } = useOry();
+  const navigate = useNavigate();
+
+  // In a real application, you would check authentication with an API call
+  // and redirect to home if not authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Check authentication status with backend
+        const response = await fetch('https://api.skillgrid.tech/auth', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        // If not authenticated, redirect to home
+        if (!response.ok) {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Authentication check failed:', error);
+        // On error, it's safer to redirect to home
+        navigate('/');
+      }
+    };
+    
+    // Only check auth when component mounts and not loading
+    if (!isLoading) {
+      checkAuth();
+    }
+  }, [isLoading, navigate]);
+
+  const goToProfile = () => {
+    // Will be implemented in the future
+    console.log('Navigate to profile page');
+    // navigate('/profile');
+  };
+
+  const viewJobDetails = (jobId: number) => {
+    // Will be implemented in the future
+    console.log(`View details for job ${jobId}`);
+    // navigate(`/vacancies/${jobId}`);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       {/* Navigation Bar - Fixed to top */}
@@ -47,10 +103,16 @@ const VacanciesPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <span className="text-2xl font-bold text-gray-900">SkillGrid</span>
+              <span 
+                className="text-2xl font-bold text-gray-900 cursor-pointer"
+                onClick={() => navigate('/')}
+              >
+                SkillGrid
+              </span>
             </div>
             <div className="flex items-center">
               <button
+                onClick={goToProfile}
                 className="px-4 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
               >
                 My Profile
@@ -96,7 +158,10 @@ const VacanciesPage: React.FC = () => {
                     </div>
                   </div>
                   
-                  <button className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition">
+                  <button 
+                    onClick={() => viewJobDetails(job.id)}
+                    className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition"
+                  >
                     View Details
                   </button>
                 </div>
