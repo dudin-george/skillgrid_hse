@@ -59,9 +59,35 @@ const VacancyDetailsPage: React.FC = () => {
         // In a real app, you would fetch vacancy details here
         // For now, we just simulate a network request
         setTimeout(() => {
+          // Map vacancy IDs to different job titles for a more realistic demo
+          let vacancyTitle = "Backend Developer";
+          let vacancyCompany = "TechNova";
+          
+          const id = parseInt(vacancyId || '1', 10);
+          
+          // Match with sample jobs from VacanciesPage
+          if (id === 1) {
+            vacancyTitle = "Full Stack Developer";
+            vacancyCompany = "TechSolutions Inc.";
+          } else if (id === 2) {
+            vacancyTitle = "UI/UX Designer";
+            vacancyCompany = "Creative Minds";
+          } else if (id === 3) {
+            vacancyTitle = "DevOps Engineer";
+            vacancyCompany = "Cloud Systems";
+          } else if (id === 4) {
+            vacancyTitle = "Data Scientist";
+            vacancyCompany = "Insight Analytics";
+          } else if (id === 5) {
+            vacancyTitle = "Mobile App Developer";
+            vacancyCompany = "AppWorks";
+          }
+          
           setVacancy({
             ...sampleVacancyDetails,
-            id: parseInt(vacancyId || '1', 10)
+            id: id,
+            title: vacancyTitle,
+            company: vacancyCompany
           });
           setLoading(false);
         }, 500);

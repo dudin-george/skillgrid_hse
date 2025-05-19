@@ -83,9 +83,7 @@ const VacanciesPage: React.FC = () => {
   };
 
   const viewJobDetails = (jobId: number) => {
-    // Will be implemented in the future
-    console.log(`View details for job ${jobId}`);
-    // navigate(`/vacancies/${jobId}`);
+    navigate(`/vacancy/${jobId}`);
   };
 
   if (isLoading) {
