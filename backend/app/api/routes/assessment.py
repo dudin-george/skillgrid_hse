@@ -19,6 +19,7 @@ from app.schemas.assessment import (
     TaskSubmissionResult, AssessmentResultResponse, TaskDifficulty,
     AssessmentStatus, AssessmentTask, SkillResult, AssessmentListResponse
 )
+from app.core.auth import get_user_id, require_candidate, authenticated_user
 
 router = APIRouter()
 
@@ -64,28 +65,35 @@ def compile_and_execute_code(code: str, language: str, test_cases: List[Dict]) -
 
 @router.post("/start", response_model=ActiveAssessmentResponse)
 def start_assessment(
-    request: StartAssessmentRequest,
-    db: Session = Depends(get_db)
+    request: Request,
+    assessment_request: StartAssessmentRequest,
+    db: Session = Depends(get_db),
+    user_data: dict = Depends(require_candidate),
+    user_id: UUID = Depends(get_user_id)
 ):
     """
-    Start a new assessment for a candidate.
+    Start a new assessment for the authenticated candidate.
     This creates an assessment with selected tasks based on the skill preset.
     """
+    # Get candidate ID from auth session - don't use the one from request if provided
+    # This ensures we can only start assessments for ourselves
+    candidate_id = user_id
+    
     # Check if there's already an active assessment for this candidate
     existing_assessment = db.query(Assessment).filter(
-        Assessment.candidate_id == request.candidate_id,
+        Assessment.candidate_id == candidate_id,
         Assessment.status == "in_progress"
     ).first()
     
     if existing_assessment:
         # Return the existing assessment instead of creating a new one
-        return get_active_assessment(existing_assessment.id, db=db)
+        return get_active_assessment(request, existing_assessment.id, db=db)
     
     # Determine which skill preset to use
     skill_preset = None
-    if request.skill_preset_id:
+    if assessment_request.skill_preset_id:
         skill_preset = db.query(SkillPreset).filter(
-            SkillPreset.id == request.skill_preset_id,
+            SkillPreset.id == assessment_request.skill_preset_id,
             SkillPreset.is_active == True
         ).first()
         
@@ -102,7 +110,7 @@ def start_assessment(
     
     # Create a new assessment
     new_assessment = Assessment(
-        candidate_id=request.candidate_id,
+        candidate_id=candidate_id,
         assessment_date=datetime.utcnow(),
         status="in_progress"
     )
@@ -159,12 +167,15 @@ def start_assessment(
     db.commit()
     
     # Return the active assessment details
-    return get_active_assessment(new_assessment.id, db=db)
+    return get_active_assessment(request, new_assessment.id, db=db)
 
 @router.get("/{assessment_id}", response_model=ActiveAssessmentResponse)
 def get_active_assessment(
+    request: Request,
     assessment_id: UUID,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_data: dict = Depends(require_candidate),
+    user_id: UUID = Depends(get_user_id)
 ):
     """
     Get the current state of an assessment, including current and remaining tasks
@@ -173,6 +184,10 @@ def get_active_assessment(
     assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
+    
+    # Verify the assessment belongs to the authenticated user
+    if assessment.candidate_id != user_id:
+        raise HTTPException(status_code=403, detail="You don't have permission to access this assessment")
     
     # Get all subskills associated with this assessment
     assessment_subskills = db.query(AssessmentSubSkill).filter(
@@ -299,8 +314,10 @@ def get_active_assessment(
 
 @router.post("/compile", response_model=CompileResult)
 def compile_code(
-    request: CompileCodeRequest,
-    db: Session = Depends(get_db)
+    request: Request,
+    compile_request: CompileCodeRequest,
+    db: Session = Depends(get_db),
+    user_data: dict = Depends(authenticated_user)
 ):
     """
     Compile and run code to see the output without submitting
@@ -315,15 +332,18 @@ def compile_code(
     ]
     
     # Compile and execute the code
-    result = compile_and_execute_code(request.code, request.language, test_cases)
+    result = compile_and_execute_code(compile_request.code, compile_request.language, test_cases)
     
     return result
 
 @router.post("/{assessment_id}/submit", response_model=TaskSubmissionResult)
 def submit_task(
+    request: Request,
     assessment_id: UUID,
-    request: SubmitTaskRequest,
-    db: Session = Depends(get_db)
+    task_request: SubmitTaskRequest,
+    db: Session = Depends(get_db),
+    user_data: dict = Depends(require_candidate),
+    user_id: UUID = Depends(get_user_id)
 ):
     """
     Submit a solution for a task in the assessment
@@ -340,15 +360,19 @@ def submit_task(
             detail="Assessment not found or already completed"
         )
     
+    # Verify the assessment belongs to the authenticated user
+    if assessment.candidate_id != user_id:
+        raise HTTPException(status_code=403, detail="You don't have permission to access this assessment")
+    
     # Verify the task exists
-    task = db.query(Task).filter(Task.id == request.task_id).first()
+    task = db.query(Task).filter(Task.id == task_request.task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     
     # Check if this task has already been submitted
     existing_submission = db.query(TaskSubmission).filter(
         TaskSubmission.assessment_id == assessment_id,
-        TaskSubmission.task_id == request.task_id
+        TaskSubmission.task_id == task_request.task_id
     ).first()
     
     if existing_submission:
@@ -377,7 +401,7 @@ def submit_task(
     
     # Compile and execute the code
     compile_result = compile_and_execute_code(
-        request.submitted_code, 
+        task_request.submitted_code, 
         "python",  # Assuming Python for now
         test_case_data
     )
@@ -386,14 +410,14 @@ def submit_task(
     # In a real system, you would test against all test cases and compute a score
     
     # Simulate test outcomes
-    is_correct = compile_result.success and "error" not in request.submitted_code.lower()
+    is_correct = compile_result.success and "error" not in task_request.submitted_code.lower()
     score = task.points if is_correct else max(0, int(task.points * 0.3))  # 0 or partial credit
     
     # Create the submission record
     submission = TaskSubmission(
-        task_id=request.task_id,
+        task_id=task_request.task_id,
         assessment_id=assessment_id,
-        submitted_code=request.submitted_code,
+        submitted_code=task_request.submitted_code,
         is_correct=is_correct,
         score=score,
         execution_time_ms=compile_result.execution_time_ms,
@@ -406,7 +430,7 @@ def submit_task(
     
     # Get subskills that this task tests
     task_subskills = db.query(TaskSubSkill).filter(
-        TaskSubSkill.task_id == request.task_id
+        TaskSubSkill.task_id == task_request.task_id
     ).all()
     
     # Get assessment subskills
@@ -432,7 +456,7 @@ def submit_task(
     
     # Return the submission result
     return TaskSubmissionResult(
-        task_id=request.task_id,
+        task_id=task_request.task_id,
         is_correct=is_correct,
         score=score,
         execution_time_ms=compile_result.execution_time_ms,
@@ -442,8 +466,11 @@ def submit_task(
 
 @router.get("/{assessment_id}/result", response_model=AssessmentResultResponse)
 def get_assessment_result(
+    request: Request,
     assessment_id: UUID,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_data: dict = Depends(authenticated_user),
+    user_id: UUID = Depends(get_user_id)
 ):
     """
     Get the detailed result of a completed assessment
@@ -453,6 +480,16 @@ def get_assessment_result(
     
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
+    
+    # Verify the user has permission to view this assessment
+    # Candidates can only view their own assessments
+    # In a more complete solution, recruiters would have additional permissions
+    identity = user_data.get("identity", {})
+    traits = identity.get("traits", {})
+    person_type = traits.get("person_type")
+    
+    if person_type == "candidate" and assessment.candidate_id != user_id:
+        raise HTTPException(status_code=403, detail="You don't have permission to view this assessment")
     
     # Get submissions for this assessment
     task_submissions = db.query(TaskSubmission).filter(
@@ -570,14 +607,42 @@ def get_assessment_result(
         feedback=assessment.feedback
     )
 
-@router.get("/candidate/{candidate_id}", response_model=AssessmentListResponse)
-def get_candidate_assessments(
-    candidate_id: UUID,
+@router.get("/my/assessments", response_model=AssessmentListResponse)
+def get_my_assessments(
+    request: Request,
     limit: Optional[int] = Query(10, ge=1, le=50),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_data: dict = Depends(require_candidate),
+    user_id: UUID = Depends(get_user_id)
 ):
     """
-    Get all assessments for a specific candidate
+    Get all assessments for the authenticated candidate
+    """
+    # Get assessments for the authenticated user, ordered by most recent first
+    assessments = db.query(Assessment).filter(
+        Assessment.candidate_id == user_id
+    ).order_by(desc(Assessment.assessment_date)).limit(limit).all()
+    
+    assessment_results = []
+    
+    for assessment in assessments:
+        # Get the detailed result for each assessment
+        result = get_assessment_result(request, assessment.id, db=db, user_data=user_data, user_id=user_id)
+        assessment_results.append(result)
+    
+    return AssessmentListResponse(assessments=assessment_results)
+
+# This endpoint is only for admin/recruiting purposes
+@router.get("/candidate/{candidate_id}", response_model=AssessmentListResponse)
+def get_candidate_assessments(
+    request: Request,
+    candidate_id: UUID,
+    limit: Optional[int] = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    user_data: dict = Depends(require_recruiter)  # Only recruiters can view other candidates' assessments
+):
+    """
+    Get all assessments for a specific candidate (recruiter only)
     """
     # Get assessments for this candidate, ordered by most recent first
     assessments = db.query(Assessment).filter(
@@ -587,8 +652,8 @@ def get_candidate_assessments(
     assessment_results = []
     
     for assessment in assessments:
-        # Get the detailed result for each assessment
-        result = get_assessment_result(assessment.id, db=db)
+        # For each assessment, get the detailed results
+        result = get_assessment_result(request, assessment.id, db=db, user_data=user_data, user_id=user_data.get("identity", {}).get("id"))
         assessment_results.append(result)
     
     return AssessmentListResponse(assessments=assessment_results) 

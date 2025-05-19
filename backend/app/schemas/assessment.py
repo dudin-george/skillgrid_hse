@@ -17,7 +17,7 @@ class TaskDifficulty(str, Enum):
 
 # Request schemas
 class StartAssessmentRequest(BaseModel):
-    candidate_id: UUID
+    candidate_id: Optional[UUID] = None
     skill_preset_id: Optional[UUID] = None
 
 class SubmitTaskRequest(BaseModel):
