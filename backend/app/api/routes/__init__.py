@@ -6,6 +6,7 @@ from app.api.routes.auth import router as auth_router
 from app.api.routes.candidate import router as candidate_router
 from app.api.routes.recruiter import router as recruiter_router
 from app.api.routes.skills import router as skills_router
+from app.api.routes.assessment import router as assessment_router
 
 router = APIRouter()
 
@@ -15,4 +16,5 @@ router.include_router(job_posting_router, tags=["job_postings"])
 router.include_router(auth_router, prefix="/auth", tags=["auth"])
 router.include_router(candidate_router, prefix="/candidate", tags=["candidate"])
 router.include_router(recruiter_router, prefix="/recruiter", tags=["recruiter"])
-router.include_router(skills_router, prefix="/domain", tags=["skills"]) 
+router.include_router(skills_router, prefix="/domain", tags=["skills"])
+router.include_router(assessment_router, prefix="/assessment", tags=["assessment"]) 

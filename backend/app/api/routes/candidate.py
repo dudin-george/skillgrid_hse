@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from uuid import UUID
+from sqlalchemy import desc
 
 from app.db.database import get_db
 from app.models.models import SkillPreset, Assessment, AssessmentSubSkill, Skill, SubSkill
@@ -156,4 +157,78 @@ async def get_candidate_profile(
         skill_preset_id=skill_preset_id,
         skill_preset_name=skill_preset_name,
         last_assessment=last_assessment
-    ) 
+    )
+
+@router.get("/assessments", response_model=List[AssessmentResult])
+async def get_candidate_assessments(
+    request: Request,
+    limit: Optional[int] = 10,
+    db: Session = Depends(get_db),
+    user_data: dict = Depends(require_candidate),
+    user_id: UUID = Depends(get_user_id)
+):
+    """
+    Get all assessments for the authenticated candidate
+    """
+    # Get assessments for this user, ordered by most recent first
+    assessments = db.query(Assessment).filter(
+        Assessment.candidate_id == user_id
+    ).order_by(desc(Assessment.assessment_date)).limit(limit).all()
+    
+    result = []
+    
+    for assessment in assessments:
+        # Calculate skill confirmation percentages
+        skill_results = {}
+        
+        # Get all assessment_subskills for this assessment
+        assessment_subskills = db.query(AssessmentSubSkill).filter(
+            AssessmentSubSkill.assessment_id == assessment.id
+        ).all()
+        
+        # Group by skill and calculate percentage
+        skill_subskill_counts = {}
+        skill_confirmed_counts = {}
+        
+        # Count total subskills and confirmed subskills for each skill
+        for assessment_subskill in assessment_subskills:
+            # Get the subskill
+            subskill = db.query(SubSkill).filter(SubSkill.id == assessment_subskill.subskill_id).first()
+            if not subskill:
+                continue
+                
+            # Get the skill
+            skill = db.query(Skill).filter(Skill.id == subskill.skill_id).first()
+            if not skill:
+                continue
+                
+            # Count this subskill
+            skill_name = skill.name
+            if skill_name not in skill_subskill_counts:
+                skill_subskill_counts[skill_name] = 0
+                skill_confirmed_counts[skill_name] = 0
+                
+            skill_subskill_counts[skill_name] += 1
+            if assessment_subskill.is_demonstrated:
+                skill_confirmed_counts[skill_name] += 1
+        
+        # Calculate percentages
+        for skill_name in skill_subskill_counts:
+            if skill_subskill_counts[skill_name] > 0:
+                skill_results[skill_name] = skill_confirmed_counts[skill_name] / skill_subskill_counts[skill_name]
+            else:
+                skill_results[skill_name] = 0.0
+        
+        # Create assessment result object
+        assessment_result = AssessmentResult(
+            assessment_id=assessment.id,
+            assessment_date=assessment.assessment_date,
+            skill_results=skill_results,
+            total_score=assessment.total_score,
+            completion_time_minutes=assessment.completion_time_minutes,
+            status=assessment.status
+        )
+        
+        result.append(assessment_result)
+    
+    return result 
