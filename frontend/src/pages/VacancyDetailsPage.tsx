@@ -110,8 +110,9 @@ const VacancyDetailsPage: React.FC = () => {
 
   const startAssessment = () => {
     console.log(`Start assessment for vacancy ${vacancyId}`);
-    // In a real app, navigate to assessment page
-    // navigate(`/assessment/${vacancyId}`);
+    // In a real app, this would navigate to an actual assessment page first
+    // For demo purposes, navigate directly to assessment results
+    navigate('/assessment-results');
   };
 
   const goBack = () => {
