@@ -109,10 +109,9 @@ const VacancyDetailsPage: React.FC = () => {
   };
 
   const startAssessment = () => {
-    console.log(`Start assessment for vacancy ${vacancyId}`);
-    // In a real app, this would navigate to an actual assessment page first
-    // For demo purposes, navigate directly to assessment results
-    navigate('/assessment-results');
+    console.log(`Starting general assessment`);
+    // Navigate to the general assessment page
+    navigate('/assessment');
   };
 
   const goBack = () => {
@@ -210,23 +209,28 @@ const VacancyDetailsPage: React.FC = () => {
             </div>
             
             {/* Action Buttons */}
-            <div className="flex mt-2 space-x-4">
-              <button
-                onClick={startAssessment}
-                className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition"
-              >
-                Start Assessment
-              </button>
-              <button
-                disabled={!vacancy.assessmentCompleted}
-                className={`px-4 py-2 rounded-md font-medium ${
-                  vacancy.assessmentCompleted
-                    ? 'bg-green-600 text-white hover:bg-green-700'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                } transition`}
-              >
-                Apply
-              </button>
+            <div className="flex flex-col space-y-3 mt-4">
+              <div className="flex space-x-4">
+                <button
+                  onClick={startAssessment}
+                  className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition"
+                >
+                  Start Assessment
+                </button>
+                <button
+                  disabled={!vacancy.assessmentCompleted}
+                  className={`px-4 py-2 rounded-md font-medium ${
+                    vacancy.assessmentCompleted
+                      ? 'bg-green-600 text-white hover:bg-green-700'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  } transition`}
+                >
+                  Apply
+                </button>
+              </div>
+              <p className="text-sm text-gray-600">
+                Complete the skills assessment to unlock application for all jobs
+              </p>
             </div>
           </div>
 
